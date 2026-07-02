@@ -25,46 +25,43 @@ class CSVManager {
         const csvUrl = this.normalizeCsvUrl(filePath);
 
         try {
-            const response = await fetch(csvUrl, { cache: 'no-store' });
-
-            if (!response.ok) {
-                throw new Error(`Erro ao carregar CSV: ${response.statusText}`);
+            if (!csvUrl) {
+                throw new Error('Caminho do CSV não foi definido.');
             }
 
-            const contentType = response.headers.get('content-type') || '';
-            const csvText = await response.text();
-
-            if (!csvText || csvText.trim() === '') {
-                throw new Error('O arquivo CSV retornou vazio');
-            }
-
-            if (contentType.includes('text/html') || csvText.trim().toLowerCase().startsWith('<!doctype html') || csvText.trim().toLowerCase().startsWith('<html')) {
-                throw new Error('O link do Drive retornou uma página HTML em vez do CSV. Use o link de download direto e verifique as permissões do arquivo.');
-            }
-                
-                // Usar PapaParse para processar CSV
-                return new Promise((resolve, reject) => {
-                    Papa.parse(csvText, {
-                        header: true, // Usar primeira linha como cabeçalhos
-                        skipEmptyLines: true,
-                        complete: (results) => {
-                            this.products = this.processProducts(results.data, results.meta.fields);
-                            this.headers = results.meta.fields || [];
-                            this.isLoading = false;
-                            resolve(this.products);
-                        },
-                        error: (error) => {
-                            console.error('Erro ao parsear CSV:', error);
-                            this.isLoading = false;
-                            reject(error);
+            const products = [];
+            return new Promise((resolve, reject) => {
+                Papa.parse(csvUrl, {
+                    download: true,
+                    header: true, // Usar primeira linha como cabeçalhos
+                    skipEmptyLines: true,
+                    worker: true,
+                    chunk: (results) => {
+                        if (results && results.data && results.data.length > 0) {
+                            const chunkProducts = this.processProducts(results.data, results.meta.fields);
+                            products.push(...chunkProducts);
+                            if (this.headers.length === 0 && results.meta.fields) {
+                                this.headers = results.meta.fields;
+                            }
                         }
-                    });
+                    },
+                    complete: () => {
+                        this.products = products;
+                        this.isLoading = false;
+                        resolve(this.products);
+                    },
+                    error: (error) => {
+                        console.error('Erro ao parsear CSV:', error);
+                        this.isLoading = false;
+                        reject(error);
+                    }
                 });
-            } catch (error) {
-                this.isLoading = false;
-                console.error('Erro ao carregar arquivo CSV:', error);
-                throw error;
-            }
+            });
+        } catch (error) {
+            this.isLoading = false;
+            console.error('Erro ao carregar arquivo CSV:', error);
+            throw error;
+        }
     }
 
     normalizeCsvUrl(filePath) {
