@@ -9,7 +9,7 @@
 
 class MarketplaceApp {
     constructor() {
-        this.csvPath = 'https://files.catbox.moe/iy8act.csv';
+        this.csvPath = '';
         this.isInitialized = false;
     }
 
