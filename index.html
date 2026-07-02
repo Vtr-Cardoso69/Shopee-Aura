@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA SHOPEE - Loja dos Produtos Confiaveis</title>
+    <link rel="icon" type="" href="css/Fire.gif">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+    
+    <!-- Cabeçalho -->
+<header class="header">
+    <div class="container">
+        <div class="header-content">
+
+            <span class="logo-icon">✦</span>
+
+            <h1 class="logo">
+                AURA
+                <span>SHOPEE</span>
+            </h1>
+
+            <p class="tagline">
+               Produtos da Shopee da forma nunca vista antes. Selecionados, Oficiais & Seguros 
+            </p>
+
+        </div>
+    </div>
+</header>
+<style>
+
+/* Importar Fonte */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Poppins:wght@300;400;500&display=swap');
+
+.header{
+    background: linear-gradient(135deg,#0b0b0b,#181818,#0b0b0b);
+    padding:70px 20px;
+    text-align:center;
+    border-bottom:1px solid rgba(212,175,55,.25);
+    box-shadow:0 10px 35px rgba(0,0,0,.35);
+}
+
+.header-content{
+    max-width:900px;
+    margin:auto;
+}
+
+.logo-icon{
+    display:block;
+    font-size:28px;
+    color:#D4AF37;
+    margin-bottom:12px;
+    text-shadow:0 0 12px rgba(212,175,55,.6);
+}
+
+.logo{
+    font-family:'Cinzel',serif;
+    font-size:84px;
+    letter-spacing:8px;
+    font-weight:700;
+    color:#D4AF37;
+    margin:0;
+    text-transform:uppercase;
+    text-shadow:
+        0 0 8px rgba(212,175,55,.45),
+        0 0 22px rgba(212,175,55,.25);
+}
+
+.logo span{
+    display:block;
+    font-size:38px;
+    letter-spacing:14px;
+    margin-top:2px;
+    color:#f4e4b2;
+}
+
+.tagline{
+    margin-top:28px;
+    font-family:'Poppins',sans-serif;
+    color:#d6d6d6;
+    font-size:16px;
+    font-weight:300;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+</style>
+
+    <!-- Barra de Pesquisa -->
+    <section class="search-section">
+        <div class="container">
+            <div class="search-wrapper">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Procure por qualquer produto..."
+                    autocomplete="off"
+                >
+                <span class="search-icon"> <img width="40" height="auto" src="css/Fire.gif" alt="Ícone de pesquisa"> </span>
+            </div>
+        </div>
+
+            <div class="search-stats">
+                <span id="productCount" class="product-count">Carregando...</span>
+            </div>
+      
+    </section>
+
+    <!-- Filtros e Categorias -->
+    <section class="filters-section">
+        <div class="container">
+            <div class="filters-wrapper">
+                <div class="category-filter">
+                    <h3>Categorias</h3>
+                    <div id="categoryContainer" class="category-list">
+                        <button class="category-btn active" data-category="all">
+                            ✓ Todas as Categorias
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Grid de Produtos -->
+    <main class="main-content">
+        <div class="container">
+            <div id="productsContainer" class="products-grid">
+                <!-- Produtos serão renderizados aqui -->
+            </div>
+            
+            <!-- Indicador de carregamento -->
+            <div id="loadingIndicator" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>Carregando mais produtos...</p>
+            </div>
+
+            <!-- Mensagem quando não há produtos -->
+            <div id="noResults" class="no-results" style="display: none;">
+                <p>Nenhum produto encontrado</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 ShopeeAura. Dados fornecidos pelo Programa da Shopee.</p>
+            <p class="footer-note">Todos os links redirecionam para a Shopee com rastreamento seguro</p>
+        </div>
+    </footer>
+
+    <!-- Scripts externos -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    
+    <!-- Scripts do projeto (em ordem de dependência) -->
+    <script src="js/csv.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/scroll.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
