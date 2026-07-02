@@ -11,6 +11,8 @@ class CSVManager {
     constructor() {
         this.products = [];
         this.headers = [];
+        this.preserveInvalid = false;
+        this.rawRowCount = 0;
         this.isLoading = false;
     }
 
@@ -19,8 +21,10 @@ class CSVManager {
      * @param {string} filePath - Caminho do arquivo CSV
      * @returns {Promise<Array>} Array de produtos
      */
-    async loadCSV(filePath) {
+    async loadCSV(filePath, maxRows = Infinity, preserveInvalid = false) {
         this.isLoading = true;
+        this.preserveInvalid = !!preserveInvalid;
+        this.rawRowCount = 0;
 
         const csvUrl = this.normalizeCsvUrl(filePath);
 
@@ -29,34 +33,55 @@ class CSVManager {
                 throw new Error('Caminho do CSV não foi definido.');
             }
 
-            const products = [];
-            return new Promise((resolve, reject) => {
-                Papa.parse(csvUrl, {
-                    download: true,
-                    header: true, // Usar primeira linha como cabeçalhos
-                    skipEmptyLines: true,
-                    worker: true,
-                    chunk: (results) => {
-                        if (results && results.data && results.data.length > 0) {
-                            const chunkProducts = this.processProducts(results.data, results.meta.fields);
-                            products.push(...chunkProducts);
-                            if (this.headers.length === 0 && results.meta.fields) {
-                                this.headers = results.meta.fields;
+            // Usar fetch + parse do texto completo (mesma abordagem da pasta Aura-Shopee)
+            try {
+                const response = await fetch(csvUrl, { cache: 'no-store' });
+
+                if (!response.ok) {
+                    throw new Error(`Erro ao carregar CSV: ${response.statusText}`);
+                }
+
+                const contentType = response.headers.get('content-type') || '';
+                const csvText = await response.text();
+
+                if (!csvText || csvText.trim() === '') {
+                    throw new Error('O arquivo CSV retornou vazio');
+                }
+
+                if (contentType.includes('text/html') || csvText.trim().toLowerCase().startsWith('<!doctype html') || csvText.trim().toLowerCase().startsWith('<html')) {
+                    throw new Error('O link do CSV retornou uma página HTML em vez do CSV. Verifique o link de download e permissões.');
+                }
+
+                return new Promise((resolve, reject) => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        worker: true,
+                        complete: (results) => {
+                            this.rawRowCount = (results && results.data) ? results.data.length : 0;
+                            if (results && results.data) {
+                                const processed = this.processProducts(results.data, results.meta ? results.meta.fields : []);
+                                // aplicar maxRows
+                                this.products = Array.isArray(processed) ? processed.slice(0, Number(maxRows)) : [];
+                            } else {
+                                this.products = [];
                             }
+                            this.headers = (results && results.meta && results.meta.fields) ? results.meta.fields : this.headers;
+                            this.isLoading = false;
+                            resolve(this.products);
+                        },
+                        error: (error) => {
+                            console.error('Erro ao parsear CSV:', error);
+                            this.isLoading = false;
+                            reject(error);
                         }
-                    },
-                    complete: () => {
-                        this.products = products;
-                        this.isLoading = false;
-                        resolve(this.products);
-                    },
-                    error: (error) => {
-                        console.error('Erro ao parsear CSV:', error);
-                        this.isLoading = false;
-                        reject(error);
-                    }
+                    });
                 });
-            });
+            } catch (err) {
+                this.isLoading = false;
+                console.error('Erro durante fetch/parse do CSV:', err);
+                throw err;
+            }
         } catch (error) {
             this.isLoading = false;
             console.error('Erro ao carregar arquivo CSV:', error);
@@ -90,6 +115,12 @@ class CSVManager {
      * @returns {Array} Produtos processados
      */
     processProducts(rawData, headers) {
+        if (this.preserveInvalid) {
+            return rawData
+                .map((row, index) => this.createProductObject(row, index))
+                .filter(product => product !== null);
+        }
+
         return rawData
             .filter(row => this.isValidProduct(row, headers))
             .map((row, index) => this.createProductObject(row, index))
@@ -143,8 +174,18 @@ class CSVManager {
             };
 
             // Validação básica
-            if (!product.title || !product.price) {
-                return null;
+            if (!this.preserveInvalid) {
+                if (!product.title || product.title.trim() === '' || !product.price) {
+                    return null;
+                }
+            } else {
+                // Quando preservamos linhas inválidas, fornecer fallbacks mínimos
+                if (!product.title || product.title.trim() === '') {
+                    product.title = this.sanitizeString(row.title || row.name || row.item_name || `produto-${index}`);
+                }
+                if (!product.price) {
+                    product.price = 0;
+                }
             }
 
             return product;
@@ -203,6 +244,14 @@ class CSVManager {
      */
     getTotalProducts() {
         return this.products.length;
+    }
+
+    /**
+     * Retorna número bruto de linhas lidas do CSV (inclui linhas inválidas)
+     * @returns {number}
+     */
+    getRawRowCount() {
+        return this.rawRowCount || 0;
     }
 
     /**

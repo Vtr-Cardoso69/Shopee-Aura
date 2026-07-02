@@ -131,7 +131,7 @@ class ProductRenderer {
                     alt="${this.escapeHtml(product.title)}"
                     loading="lazy"
                 >
-                <div class="product-image-placeholder">📦</div>
+                <div class="product-image-placeholder"></div>
             </div>
 
             <div class="product-content">
@@ -220,8 +220,14 @@ class ProductRenderer {
      * Atualiza o contador de produtos
      */
     updateProductCount() {
-        const total = this.visibleProducts.length;
-        const displayed = Math.min(this.currentPage * this.productsPerPage, total);
+        const rawTotal = (typeof csvManager.getRawRowCount === 'function') ? csvManager.getRawRowCount() : 0;
+
+        // Se houver busca ou categoria selecionada, mostrar o total filtrado (visibleProducts).
+        const isFiltering = (typeof searchManager.getSearchTerm === 'function' && searchManager.getSearchTerm()) ||
+            (typeof searchManager.getSelectedCategory === 'function' && searchManager.getSelectedCategory() !== 'all');
+
+        const total = isFiltering ? this.visibleProducts.length : (csvManager.preserveInvalid && rawTotal > 0 ? rawTotal : this.visibleProducts.length);
+        const displayed = Math.min(this.currentPage * this.productsPerPage, this.visibleProducts.length);
         this.productCount.textContent = `Mostrando ${displayed} de ${total} produtos`;
     }
 

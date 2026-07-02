@@ -10,6 +10,7 @@
 class MarketplaceApp {
     constructor() {
         this.csvPath = 'https://files.catbox.moe/iy8act.csv';
+        this.maxRows = Infinity; // changeable limit; use Infinity to load all
         this.isInitialized = false;
     }
 
@@ -24,8 +25,8 @@ class MarketplaceApp {
             renderer.showLoading();
 
             // Carregar CSV
-            console.log(`Carregando CSV remoto: ${this.csvPath}`);
-            const products = await csvManager.loadCSV(this.csvPath);
+            console.log(`Carregando CSV remoto: ${this.csvPath} (limite ${this.maxRows})`);
+            const products = await csvManager.loadCSV(this.csvPath, this.maxRows, true);
             
             console.log(`Total de produtos carregados: ${products.length}`);
 
